@@ -21,7 +21,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.tools import tool
 
 # Create Agent
-from langchain.agents import create_agent
+from langgraph.prebuilt import create_react_agent
 
 from rank_bm25 import BM25Okapi
 import re
@@ -163,7 +163,7 @@ Always verify project facts using the tool before answering.
 If a user asks for sensitive financial info which user is not authorized to access or things not in the documents,
 politely decline as per company policy."""
 
-agent_pd1 = create_agent(
+agent_pd1 = create_react_agent(
     model=agent_llm_pd1,
     tools=[process_project_description],
     system_prompt=system_prompt_pd1
@@ -239,7 +239,7 @@ types of tasks that require a certain type of employee position and/or employee 
 
 Only use this tool for answering questions about what is in the provided meeting notes."""
 
-agent_mn = create_agent(
+agent_mn = create_react_agent(
     model=agent_llm_mn,
     tools=[process_meeting_notes],
     system_prompt=system_prompt_mn
@@ -337,7 +337,7 @@ determining who has certain clearance levels, or understanding the organizationa
 
 Only use this tool for answering questions about what is in the employee database."""
 
-agent_ed = create_agent(
+agent_ed = create_react_agent(
     model=agent_llm_ed,
     tools=[process_employee_data],
     system_prompt=system_prompt_ed
@@ -425,7 +425,7 @@ Only use these three subagents for assigning employees to tasks outlined in the 
 The final output should be the assignments of company employees to tasks from the meeting notes. If a task cannot be matched, say so.
 """
 
-agent_main = create_agent(
+agent_main = create_react_agent(
     model=agent_llm_main,
     tools=[project_description_agent, meeting_notes_agent, employee_data_agent],
     system_prompt=system_prompt_agent_main
