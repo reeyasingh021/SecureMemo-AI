@@ -79,14 +79,19 @@ SecureMemo AI uses a RAG (Retrieval-Augmented Generation) architecture with thre
 ## 📋 Project Structure
 
 ```
-SecureMemo-AI/
+SecureMemo AI
+├── README.md                      # This file
 ├── SecureMemo_AI_Coding1.ipynb    # Main notebook with RAG implementation
-├── data/
-│   ├── Meeting_Notes1.pdf          # Sample meeting notes
-│   ├── Meeting_Notes2.pdf          # Sample meeting notes
-│   ├── Sample_Employee_Data.xlsx   # Employee clearance data
-│   └── Project_Descriptions1.pdf   # Company project information
-└── README.md                        # This file
+├── main.py                          
+├── app/agent.py                     
+├── securememo_ai_coding.py        # Agent logic
+├── requirements.txt               # All dependencies listed
+├── .env                           # needs API keys
+└── data/
+    ├── Project_Descriptions1.pdf    # Company project information
+    ├── Meeting_Notes1.pdf           # Sample meeting notes
+    ├── Meeting_Notes2.pdf           # Sample meeting notes
+    └── Sample_Employee_Data.xlsx    # Employee clearance data
 ```
 
 ---
