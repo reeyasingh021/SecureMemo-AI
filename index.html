@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureMemo AI - Task Assignment Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Pastel Color Palette */
+            --pastel-pink: #FFD3E1;
+            --pastel-blue: #C5E3F6;
+            --pastel-purple: #E0BBE4;
+            --pastel-mint: #D4F4DD;
+            --pastel-peach: #FFE5CC;
+            --pastel-lavender: #E6E6FA;
+            --pastel-cream: #FFF8E7;
+            
+            /* Accent Colors */
+            --accent-purple: #B399D3;
+            --accent-blue: #A8DADC;
+            --text-dark: #5A5A5A;
+            --text-light: #8A8A8A;
+            --white: #FFFFFF;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--pastel-cream) 0%, var(--pastel-lavender) 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--pastel-purple), var(--pastel-pink));
+            padding: 25px 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px var(--shadow);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--white);
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            color: var(--white);
+            font-size: 1em;
+            opacity: 0.95;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px var(--shadow);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        /* Messages Area */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 15px 20px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-mint));
+            color: var(--text-dark);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.agent .message-bubble {
+            background: var(--pastel-peach);
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Thinking Bubble */
+        .thinking-bubble {
+            display: inline-block;
+            padding: 15px 20px;
+            border-radius: 18px;
+            background: var(--pastel-lavender);
+            color: var(--text-dark);
+            box-shadow: 0 2px 8px var(--shadow);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .thinking-dots {
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .thinking-dots span {
+            animation: blink 1.4s infinite;
+            font-size: 1.2em;
+        }
+
+        .thinking-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .thinking-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 20%, 50%, 80%, 100% { opacity: 0.3; }
+            40% { opacity: 1; }
+        }
+
+        /* Results Table */
+        .results-table {
+            margin-top: 15px;
+            width: 100%;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .results-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, var(--pastel-purple), var(--accent-purple));
+            color: var(--white);
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .results-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--pastel-lavender);
+            font-size: 0.9em;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: var(--pastel-cream);
+        }
+
+        .results-table tr:hover {
+            background: var(--pastel-mint);
+            transition: background 0.2s ease;
+        }
+
+        /* Input Area */
+        .input-area {
+            display: flex;
+            gap: 12px;
+            padding: 15px;
+            background: var(--pastel-cream);
+            border-radius: 15px;
+            box-shadow: 0 -2px 10px var(--shadow);
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid var(--pastel-purple);
+            border-radius: 12px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+            background: var(--white);
+        }
+
+        .input-area input:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(179, 153, 211, 0.1);
+        }
+
+        .input-area button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--pastel-purple), var(--accent-purple));
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .input-area button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .input-area button:active {
+            transform: translateY(0);
+        }
+
+        .input-area button:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Scrollbar Styling */
+        .messages-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-area::-webkit-scrollbar-track {
+            background: var(--pastel-lavender);
+            border-radius: 10px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 10px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb:hover {
+            background: var(--pastel-purple);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: var(--accent-purple);
+        }
+
+        .empty-state p {
+            font-size: 1em;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .results-table {
+                font-size: 0.85em;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔐 SecureMemo AI</h1>
+            <p>Intelligent Task Assignment Assistant</p>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="messages-area" id="messagesArea">
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <h3>Welcome to SecureMemo AI!</h3>
+                    <p>Ask me to assign employees to tasks from meeting notes, or query information about projects, meetings, or employees.</p>
+                    <p style="margin-top: 15px; font-size: 0.9em;">💡 Try: "Assign employees to tasks from the meeting notes"</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Type your query here..."
+                    autocomplete="off"
+                >
+                <button id="sendButton" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let isProcessing = false;
+
+        // Enable sending with Enter key
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message || isProcessing) return;
+
+            isProcessing = true;
+            document.getElementById('sendButton').disabled = true;
+
+            // Clear empty state if present
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Add thinking bubble
+            const thinkingId = addThinkingBubble();
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                // Remove thinking bubble
+                removeThinkingBubble(thinkingId);
+
+                // Check if response contains task assignments
+                if (containsTaskAssignments(data.response)) {
+                    addTaskTable(data.response);
+                } else {
+                    addMessage(data.response, 'agent');
+                }
+
+            } catch (error) {
+                removeThinkingBubble(thinkingId);
+                addMessage('Sorry, I encountered an error. Please make sure the server is running.', 'agent');
+                console.error('Error:', error);
+            }
+
+            isProcessing = false;
+            document.getElementById('sendButton').disabled = false;
+        }
+
+        function addMessage(text, sender) {
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+            
+            messageDiv.appendChild(bubble);
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function addThinkingBubble() {
+            const messagesArea = document.getElementById('messagesArea');
+            const thinkingDiv = document.createElement('div');
+            const id = 'thinking-' + Date.now();
+            thinkingDiv.id = id;
+            thinkingDiv.className = 'message agent';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'thinking-bubble';
+            bubble.innerHTML = `
+                Thinking<span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span>
+            `;
+            
+            thinkingDiv.appendChild(bubble);
+            messagesArea.appendChild(thinkingDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+            
+            return id;
+        }
+
+        function removeThinkingBubble(id) {
+            const bubble = document.getElementById(id);
+            if (bubble) {
+                bubble.remove();
+            }
+        }
+
+        function containsTaskAssignments(text) {
+            // Check if response contains task assignment patterns
+            const patterns = [
+                /task.*assign/i,
+                /employee.*task/i,
+                /assign.*employee/i,
+                /\d+\.\s+.*-.*@/i  // Pattern like "1. Task - employee@email"
+            ];
+            return patterns.some(pattern => pattern.test(text));
+        }
+
+        function addTaskTable(text) {
+            const tasks = parseTaskAssignments(text);
+            
+            if (tasks.length === 0) {
+                addMessage(text, 'agent');
+                return;
+            }
+
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message agent';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.style.maxWidth = '95%';
+            
+            // Add summary text if present
+            const summaryMatch = text.match(/(Here.*assignments?:?|I've.*assigned?:?|Task.*assignments?:?)/i);
+            if (summaryMatch) {
+                const summary = document.createElement('p');
+                summary.textContent = summaryMatch[0];
+                summary.style.marginBottom = '15px';
+                summary.style.fontWeight = '600';
+                bubble.appendChild(summary);
+            }
+            
+            // Create table
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'results-table';
+            
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Project</th>
+                        <th>Employee Name</th>
+                        <th>Position</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tasks.map(task => `
+                        <tr>
+                            <td>${task.task}</td>
+                            <td>${task.project}</td>
+                            <td>${task.name}</td>
+                            <td>${task.position}</td>
+                            <td>${task.email}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            
+            tableDiv.appendChild(table);
+            bubble.appendChild(tableDiv);
+            messageDiv.appendChild(bubble);
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function parseTaskAssignments(text) {
+            const tasks = [];
+            
+            // Try to parse structured task assignments
+            // Pattern: Task description - Employee (Position) - email@example.com - Project
+            const lines = text.split('\n');
+            
+            for (let line of lines) {
+                // Skip empty lines and headers
+                if (!line.trim() || line.match(/^(here|task|assignment)/i)) continue;
+                
+                // Try to extract task information
+                // Pattern variations we might see:
+                // 1. Task - Name (Position) - email - Project
+                // 2. Task: Name, Position, email, Project
+                
+                const emailMatch = line.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+                if (!emailMatch) continue;
+                
+                const email = emailMatch[1];
+                
+                // Try to find name (usually before email or in parentheses)
+                const nameMatch = line.match(/([A-Z][a-z]+\s+[A-Z][a-z]+)/);
+                const name = nameMatch ? nameMatch[1] : 'Unassigned';
+                
+                // Try to find position (usually in parentheses or after a dash)
+                const positionMatch = line.match(/\(([^)]+)\)/) || line.match(/-\s*([^-]+?)\s*-/);
+                const position = positionMatch ? positionMatch[1].trim() : 'N/A';
+                
+                // Extract task (usually at the beginning)
+                const taskMatch = line.match(/^[\d\.\-\*\s]*(.+?)(?:-|:|\()/);
+                const task = taskMatch ? taskMatch[1].trim() : line.substring(0, 50) + '...';
+                
+                // Extract project (might be mentioned)
+                const projectMatch = line.match(/project[:\s]*([^-\n]+)/i) || 
+                                   line.match(/(Small Business Loan|Digital Loan|Investment)/i);
+                const project = projectMatch ? projectMatch[1].trim() : 'General';
+                
+                tasks.push({ task, project, name, position, email });
+            }
+            
+            return tasks;
+        }
+    </script>
+</body>
+</html>
