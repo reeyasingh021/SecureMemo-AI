@@ -66,4 +66,4 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 from fastapi.staticfiles import StaticFiles
-# app.mount("/ui", StaticFiles(directory="static", html=True), name="static")
+app.mount("/ui", StaticFiles(directory="static", html=True), name="static")
