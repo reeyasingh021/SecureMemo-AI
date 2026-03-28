@@ -111,7 +111,7 @@ embeddings = GoogleGenerativeAIEmbeddings(
 
 # Company Project Notes - Document Loading and Chunking
 full_text_pd1 = load_pdf("Project_Descriptions1.pdf")
-chunks_pd1 = get_chunks(full_text_pd1, 1000, 150)
+chunks_pd1 = get_chunks(full_text_pd1, 2000, 200)
 
 # Embeddings and Storage
 # Use Chroma.from_texts() with chunks and embedding model
