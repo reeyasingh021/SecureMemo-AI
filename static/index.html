@@ -26,9 +26,11 @@
             --text-light: #8A8A8A;
             --white: #FFFFFF;
             --light-beige: #FAF0E6;
+            --antique-white: #FAEBD7
             --persian-red: #CA3433;
             --maroon: #800000;
             --crimson: #B80F0A;
+            --salmon: #FA8072;
             --shadow: rgba(0, 0, 0, 0.08);
         }
 
@@ -118,13 +120,13 @@
         }
 
         .message.user .message-bubble {
-            background: linear-gradient(135deg, var(--pastel-blue), var(--pastel-mint));
+            background: var(--salmon);
             color: var(--text-dark);
             border-bottom-right-radius: 4px;
         }
 
         .message.agent .message-bubble {
-            background: var(--pastel-peach);
+            background: var(--antique-white);
             color: var(--text-dark);
             border-bottom-left-radius: 4px;
             max-width: 85%;
@@ -141,7 +143,7 @@
         }
 
         .message.agent .message-bubble strong {
-            color: var(--accent-purple);
+            color: var(--crimson);
             font-weight: 600;
         }
 
@@ -158,13 +160,13 @@
         .message.agent .message-bubble h1,
         .message.agent .message-bubble h2,
         .message.agent .message-bubble h3 {
-            color: var(--accent-purple);
+            color: var(--maroon);
             margin: 12px 0 6px 0;
             font-size: 1.05em;
         }
 
         .message.agent .message-bubble code {
-            background: var(--pastel-lavender);
+            background: var(--persian-red);
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.9em;
@@ -175,7 +177,7 @@
             display: inline-block;
             padding: 15px 20px;
             border-radius: 18px;
-            background: var(--pastel-lavender);
+            background: var(--antique-white);
             color: var(--text-dark);
             box-shadow: 0 2px 8px var(--shadow);
             animation: pulse 1.5s ease-in-out infinite;
@@ -296,14 +298,14 @@
         /* Scrollbar Styling */
         .messages-area::-webkit-scrollbar { width: 8px; }
         .messages-area::-webkit-scrollbar-track {
-            background: var(--pastel-lavender);
+            background: var(--salmon);
             border-radius: 10px;
         }
         .messages-area::-webkit-scrollbar-thumb {
-            background: var(--accent-purple);
+            background: var(--crimson);
             border-radius: 10px;
         }
-        .messages-area::-webkit-scrollbar-thumb:hover { background: var(--pastel-purple); }
+        .messages-area::-webkit-scrollbar-thumb:hover { background: var(--salmon); }
 
         /* Empty State */
         .empty-state {
