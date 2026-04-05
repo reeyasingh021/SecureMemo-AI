@@ -27,6 +27,8 @@
             --white: #FFFFFF;
             --light-beige: #FAF0E6;
             --persian-red: #CA3433;
+            --maroon: #800000;
+            --crimson: #B80F0A,
             --shadow: rgba(0, 0, 0, 0.08);
         }
 
@@ -244,7 +246,7 @@
             display: flex;
             gap: 12px;
             padding: 15px;
-            background: var(--pastel-cream);
+            background: var(--light-beige);
             border-radius: 15px;
             box-shadow: 0 -2px 10px var(--shadow);
         }
@@ -252,7 +254,7 @@
         .input-area input {
             flex: 1;
             padding: 15px 20px;
-            border: 2px solid var(--pastel-purple);
+            border: 2px solid var(--crimson);
             border-radius: 12px;
             font-size: 1em;
             outline: none;
@@ -261,7 +263,7 @@
         }
 
         .input-area input:focus {
-            border-color: var(--accent-purple);
+            border-color: var(--crimson);
             box-shadow: 0 0 0 3px rgba(179, 153, 211, 0.1);
         }
 
@@ -313,7 +315,7 @@
         .empty-state h3 {
             font-size: 1.5em;
             margin-bottom: 10px;
-            color: var(--accent-purple);
+            color: var(--maroon);
         }
 
         .empty-state p { font-size: 1em; }
