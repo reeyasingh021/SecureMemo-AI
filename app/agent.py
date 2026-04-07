@@ -214,7 +214,7 @@ def process_meeting_notes(query: str) -> str:
   """Process and Search the uploaded Meeting Notes for tasks mentioned in company meetings. Tasks can include information about action items for projects, types of employees and access levels required, and deadines.
     Use this tool when asked about tasks mentioned in meeting notes."""
   # Running semantic search
-  vector_docs = vectorstore_mn.similarity_search(query, k=5)
+  vector_docs = vectorstore_mn.similarity_search(query, k=10)
   vector_texts = [doc.page_content for doc in vector_docs]
 
   # Running Keyword search
