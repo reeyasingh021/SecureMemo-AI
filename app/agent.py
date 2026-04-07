@@ -438,7 +438,9 @@ STEP 3:
 For EACH task, determine the required role using project descriptions.
 
 STEP 4:
-For EACH task, find the BEST matching employee using employee data.
+For EACH task, find ALL relevant employees using employee data.
+- Do NOT limit to one employee
+- Include ALL reasonable matches
 
 STEP 5:
 Repeat until EVERY task across ALL projects is processed.
@@ -452,7 +454,7 @@ Your response is NOT complete unless:
 - ALL projects from the meeting notes are included
 - ALL tasks under each project are included
 - EVERY task has either:
-  - a matched employee, OR
+  - one or more matched employees, OR
   - is explicitly marked as "No match found"
 
 If anything is missing, you MUST continue working before responding.
@@ -470,13 +472,6 @@ IMPORTANT:
 - Do NOT generate fake or example employees
 - ONLY use real employees returned by the employee_data_agent
 - If no employee exists, say "No match found"
-
-### IMPORTANT CONSTRAINTS
-
-- Always use tools to verify information before answering
-- Do NOT make up employees or roles
-- Only use information retrieved from the tools
-- Be concise and structured
 
 ---
 
@@ -505,16 +500,25 @@ DO NOT include labels like "JSON:" or any extra text before the array.
 
 ### JSON FORMAT
 
-Each assignment MUST follow this exact structure:
+Each task MUST be represented as ONE object with MULTIPLE employees:
 
 [
   {
     "sector": "Sector Name",
     "project": "Project Name",
     "task": "Task description",
-    "name": "Employee Name",
-    "position": "Employee Position",
-    "email": "employee@email.com"
+    "employees": [
+      {
+        "name": "Employee Name",
+        "position": "Employee Position",
+        "email": "employee@email.com"
+      },
+      {
+        "name": "Employee Name",
+        "position": "Employee Position",
+        "email": "employee@email.com"
+      }
+    ]
   }
 ]
 
@@ -524,10 +528,13 @@ Each assignment MUST follow this exact structure:
 
 - JSON must be VALID
 - Use double quotes for all keys and values
-- Include ALL assignments
+- Include ALL tasks
 - Each task = one object
+- Each task can have MULTIPLE employees
 - Do NOT include comments
 - Do NOT include explanation inside JSON
+- If no employees match:
+  - set employees = []
 
 ---
 
