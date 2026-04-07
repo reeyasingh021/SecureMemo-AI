@@ -214,7 +214,7 @@ def process_meeting_notes(query: str) -> str:
   """Process and Search the uploaded Meeting Notes for tasks mentioned in company meetings. Tasks can include information about action items for projects, types of employees and access levels required, and deadines.
     Use this tool when asked about tasks mentioned in meeting notes."""
   # Running semantic search
-  vector_docs = vectorstore_mn.similarity_search(query, k=10)
+  vector_docs = vectorstore_mn.similarity_search(query, k=100)
   vector_texts = [doc.page_content for doc in vector_docs]
 
   # Running Keyword search
@@ -427,6 +427,11 @@ You MUST follow this exact reasoning process:
 
 STEP 1:
 Extract a COMPLETE list of ALL projects from the meeting notes.
+
+You MUST identify multiple distinct projects if they exist.
+Do NOT stop after finding one project.
+If only one project is returned but multiple exist in the meeting notes,
+you MUST continue searching and include the missing projects.
 
 STEP 2:
 For EACH project, extract ALL tasks associated with it.
