@@ -67,9 +67,12 @@ async def chat(request: ChatRequest):
 
         full_text = result["messages"][-1].content
 
-        # Remove JSON block from visible text
+        # Extract JSON block
+        json_match = re.search(r'\[\s*{.*}\s*\]', full_text, re.DOTALL)
+        
+        # Remove JSON from visible text
         clean_text = re.sub(r'\[\s*{.*}\s*\]', '', full_text, flags=re.DOTALL).strip()
-
+        
         assignments = []
         if json_match:
             try:
@@ -77,7 +80,7 @@ async def chat(request: ChatRequest):
             except Exception as e:
                 print("JSON parsing failed:", e)
                 assignments = []
-
+                
         return ChatResponse(
             response=clean_text,
             assignments=assignments
