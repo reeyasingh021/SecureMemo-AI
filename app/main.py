@@ -1,4 +1,6 @@
 import os
+import json
+import re
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
@@ -20,7 +22,7 @@ app = FastAPI(
                     sub agents and can read the company
                     projects, meeting notes, and employee
                     data to answer questions and assign the
-                    tasks powered  by LangGraph""",
+                    tasks powered by LangGraph""",
     version="1.0.0"
 )
 
@@ -36,8 +38,10 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str
 
+# Updated response model (IMPORTANT)
 class ChatResponse(BaseModel):
     response: str
+    assignments: list = []
 
 @app.on_event("startup")
 async def verify_files():
@@ -54,13 +58,31 @@ async def health_check():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
-        # config is important because it allows agent to remember the history
         config = {"configurable": {"thread_id": "default_user"}}
+
         result = agent_main.invoke(
             {"messages": [HumanMessage(content=request.message)]}, 
             config=config
         )
-        return ChatResponse(response=result["messages"][-1].content)
+
+        full_text = result["messages"][-1].content
+
+        # Extract JSON block from LLM output
+        json_match = re.search(r'\[\s*{.*}\s*\]', full_text, re.DOTALL)
+
+        assignments = []
+        if json_match:
+            try:
+                assignments = json.loads(json_match.group())
+            except Exception as e:
+                print("JSON parsing failed:", e)
+                assignments = []
+
+        return ChatResponse(
+            response=full_text,
+            assignments=assignments
+        )
+
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
