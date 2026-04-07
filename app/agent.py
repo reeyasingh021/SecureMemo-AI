@@ -419,6 +419,19 @@ You have access to three tools:
 
 You MUST use all three tools in this order when assigning employees to tasks.
 
+You MUST extract ALL tasks from ALL meeting notes.
+
+You MUST assign employees to EVERY task where possible.
+
+Do NOT stop early.
+Do NOT return partial results.
+
+Your answer is incomplete unless ALL projects and ALL tasks are processed.
+
+Before returning your answer, verify:
+- Every project from meeting notes is included
+- Every task is assigned OR explicitly marked unassigned
+
 ---
 
 ### OBJECTIVE
@@ -451,15 +464,16 @@ Example:
 
 After the explanation, you MUST output a JSON array labeled "assignments".
 
-Each assignment MUST follow this exact format:
+Each assignment MUST follow this format:
 
 [
   {
-    "project": "Project Name",
-    "task": "Task description",
-    "name": "Employee Name",
-    "position": "Employee Position",
-    "email": "employee@email.com"
+    "sector": "Sector Name",
+    "project": "...",
+    "task": "...",
+    "name": "...",
+    "position": "...",
+    "email": "..."
   }
 ]
 
