@@ -67,8 +67,8 @@ async def chat(request: ChatRequest):
 
         full_text = result["messages"][-1].content
 
-        # Extract JSON block from LLM output
-        json_match = re.search(r'\[\s*{.*}\s*\]', full_text, re.DOTALL)
+        # Remove JSON block from visible text
+        clean_text = re.sub(r'\[\s*{.*}\s*\]', '', full_text, flags=re.DOTALL).strip()
 
         assignments = []
         if json_match:
@@ -79,7 +79,7 @@ async def chat(request: ChatRequest):
                 assignments = []
 
         return ChatResponse(
-            response=full_text,
+            response=clean_text,
             assignments=assignments
         )
 
