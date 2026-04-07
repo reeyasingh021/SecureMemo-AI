@@ -13,24 +13,22 @@
         }
 
         :root {
-            --pastel-pink: #FFD3E1;
-            --pastel-blue: #C5E3F6;
-            --pastel-purple: #E0BBE4;
-            --pastel-mint: #D4F4DD;
-            --pastel-peach: #FFE5CC;
-            --pastel-lavender: #E6E6FA;
-            --pastel-cream: #FFF8E7;
-            --accent-purple: #B399D3;
-            --accent-blue: #A8DADC;
-            --text-dark: #5A5A5A;
-            --text-light: #8A8A8A;
-            --white: #FFFFFF;
+            /* Core Theme (Warm Red + Beige) */
+            --persian-red: #CA3433;
+            --crimson: #B80F0A;
+            --maroon: #800000;
+            --salmon: #FA8072;
+        
+            /* Backgrounds */
             --light-beige: #FAF0E6;
             --antique-white: #FAEBD7;
-            --persian-red: #CA3433;
-            --maroon: #800000;
-            --crimson: #B80F0A;
-            --salmon: #FA8072;
+            --white: #FFFFFF;
+        
+            /* Text */
+            --text-dark: #5A5A5A;
+            --text-light: #8A8A8A;
+        
+            /* UI */
             --shadow: rgba(0, 0, 0, 0.08);
         }
 
@@ -166,7 +164,8 @@
         }
 
         .message.agent .message-bubble code {
-            background: var(--);
+            background: var(--antique-white);
+            color: var(--maroon);
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.9em;
@@ -222,12 +221,8 @@
         }
 
         .results-table th {
-            background: linear-gradient(135deg, var(--pastel-purple), var(--accent-purple));
-            color: var(--white);
-            padding: 15px 12px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.95em;
+            background: var(--persian-red);
+            color: var(--light-beige);
         }
 
         .results-table td {
@@ -237,9 +232,9 @@
         }
 
         .results-table tr:last-child td { border-bottom: none; }
-        .results-table tr:nth-child(even) { background: var(--pastel-cream); }
+        .results-table tr:nth-child(even) { background: var(--light-beige); }
         .results-table tr:hover {
-            background: var(--pastel-mint);
+            background: var(--salmon);
             transition: background 0.2s ease;
         }
 
@@ -430,6 +425,30 @@
             if (sender === 'agent') {
                 // Parse markdown for agent responses
                 bubble.innerHTML = marked.parse(text, { breaks: true, gfm: true });
+                
+                // Check if this response contains task assignments and should have a table
+                if (shouldShowTable(text)) {
+                    const tableData = extractTableData(text);
+                    if (tableData.length > 0) {
+                        // Add a separator
+                        const separator = document.createElement('hr');
+                        separator.style.margin = '20px 0';
+                        separator.style.border = 'none';
+                        separator.style.borderTop = '2px solid var(--crimson)';
+                        bubble.appendChild(separator);
+                        
+                        // Add table title
+                        const tableTitle = document.createElement('h3');
+                        tableTitle.textContent = '📊 Task Assignment Summary';
+                        tableTitle.style.color = 'var(--maroon)';
+                        tableTitle.style.marginBottom = '15px';
+                        bubble.appendChild(tableTitle);
+                        
+                        // Add the table
+                        const table = createAssignmentTable(tableData);
+                        bubble.appendChild(table);
+                    }
+                }
             } else {
                 // Plain text for user messages
                 bubble.textContent = text;
@@ -438,6 +457,115 @@
             messageDiv.appendChild(bubble);
             messagesArea.appendChild(messageDiv);
             messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function shouldShowTable(text) {
+            // Check if the response contains employee assignment patterns
+            const assignmentPatterns = [
+                /employee assignments to tasks/i,
+                /assign.*employee/i,
+                /Project:.*\(/i,  // "Project: Name (email)"
+                /@securememo\.ai/i,  // Contains employee emails
+                /Client Management:|Process & Technology:|Reporting & Analysis:/i
+            ];
+            
+            return assignmentPatterns.some(pattern => pattern.test(text));
+        }
+
+        function extractTableData(text) {
+            const tableData = [];
+            
+            // Split by sections (Process & Technology, Client Management, etc.)
+            const sections = text.split(/\*\*([^*]+):\*\*/);
+            
+            // Look for patterns with Project and employee info
+            const lines = text.split('\n');
+            let currentSector = 'General';
+            
+            for (let line of lines) {
+                // Check if this is a sector header (bold text with colon)
+                const sectorMatch = line.match(/\*\*([^*]+):\*\*/);
+                if (sectorMatch) {
+                    currentSector = sectorMatch[1].trim();
+                    continue;
+                }
+                
+                // Look for lines with Project and email
+                const projectMatch = line.match(/\(Project:\s*([^)]+)\)/i);
+                const emailMatch = line.match(/\(([a-zA-Z0-9._%+-]+@securememo\.ai)\)/);
+                const nameMatch = line.match(/([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/);
+                
+                if (projectMatch && emailMatch) {
+                    const project = projectMatch[1].trim();
+                    const email = emailMatch[1];
+                    const name = nameMatch ? nameMatch[1] : 'Unknown';
+                    
+                    // Extract position and task (everything before "Project:")
+                    const beforeProject = line.split(/\(Project:/)[0].trim();
+                    // Remove bullet point if present
+                    const cleanedBefore = beforeProject.replace(/^[○●•\-\*]\s*/, '');
+                    
+                    // Split by "/" to separate task and position
+                    const parts = cleanedBefore.split('/').map(p => p.trim());
+                    let position = 'N/A';
+                    let task = currentSector; // Default to sector name
+                    
+                    if (parts.length >= 2) {
+                        task = parts[0];
+                        position = parts[1];
+                    } else if (parts.length === 1) {
+                        position = parts[0];
+                    }
+                    
+                    // Clean up the name from the position if it's included
+                    position = position.replace(new RegExp(name, 'g'), '').trim();
+                    
+                    tableData.push({
+                        sector: currentSector,
+                        project: project,
+                        task: task,
+                        name: name,
+                        position: position,
+                        email: email
+                    });
+                }
+            }
+            
+            return tableData;
+        }
+
+        function createAssignmentTable(data) {
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'results-table';
+            
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Sector</th>
+                        <th>Project</th>
+                        <th>Task</th>
+                        <th>Employee Name</th>
+                        <th>Position</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(row => `
+                        <tr>
+                            <td><strong>${row.sector}</strong></td>
+                            <td>${row.project}</td>
+                            <td>${row.task}</td>
+                            <td>${row.name}</td>
+                            <td>${row.position}</td>
+                            <td><a href="mailto:${row.email}" style="color: var(--crimson);">${row.email}</a></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            
+            tableDiv.appendChild(table);
+            return tableDiv;
         }
 
         function addThinkingBubble() {
