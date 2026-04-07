@@ -469,16 +469,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.map(row => `
-                        <tr>
-                            <td><strong>${row.sector}</strong></td>
-                            <td>${row.project}</td>
-                            <td>${row.task}</td>
-                            <td>${row.name}</td>
-                            <td>${row.position}</td>
-                            <td><a href="mailto:${row.email}" style="color: var(--crimson);">${row.email}</a></td>
-                        </tr>
-                    `).join('')}
+                    ${data.flatMap(row => 
+                        (row.employees && row.employees.length > 0 
+                            ? row.employees 
+                            : [{ name: "No match found", position: "—", email: "" }]
+                        ).map(emp => `
+                            <tr>
+                                <td><strong>${row.sector}</strong></td>
+                                <td>${row.project}</td>
+                                <td>${row.task}</td>
+                                <td>${emp.name}</td>
+                                <td>${emp.position}</td>
+                                <td>
+                                    ${emp.email 
+                                        ? `<a href="mailto:${emp.email}" style="color: var(--crimson);">${emp.email}</a>` 
+                                        : "—"}
+                                </td>
+                            </tr>
+                        `)
+                    ).join('')}
                 </tbody>
             `;
             
