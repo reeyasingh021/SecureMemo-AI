@@ -42,34 +42,6 @@ os.environ["LANGSMITH_PROJECT"] = "SecureMemo_AI_SubAgent_Tests"
 #------------------------
 # Shared Resources
 
-# Keyword Search Function
-def keyword_search(query, chunks, top_k=3):
-    """
-    Performs BM25 keyword search over a list of text chunks.
-
-    Args:
-        query (str): The user's search query.
-        chunks (list): List of strings (the text chunks).
-        top_k (int): Number of results to return.
-
-    Returns:
-        list: The top_k most relevant chunks.
-    """
-    # Simple Tokenization/Preprocessing (Low-level cleaning)
-    def tokenize(text):
-        return re.sub(r'[^\w\s]', '', text.lower()).split()
-
-    tokenized_corpus = [tokenize(chunk) for chunk in chunks]
-    tokenized_query = tokenize(query)
-
-    # Initialize BM25
-    bm25 = BM25Okapi(tokenized_corpus)
-
-    # Retrieve top chunks
-    top_chunks = bm25.get_top_n(tokenized_query, chunks, n=top_k)
-
-    return top_chunks
-
 # Helper function to load content of file
 def load_pdf(file_name):
    """
@@ -98,8 +70,33 @@ def get_chunks(full_text, chunk_size, chunk_overlap):
    3. chunk_overlap for recursive splitting
    """
    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap, separators=["\n\n", "\n", ". ", " ", ""])
-   chunks = text_splitter.split_text(full_text)
-   return chunks
+   return text_splitter.split_text(full_text)
+
+# BM25 precomputation for Keyword Search
+def build_bm25_index(chunks):
+   # Simple Tokenization/Preprocessing (Low-level cleaning)
+   def tokenize(text):
+      return re.sub(r'[^\w\s]', '', text.lower()).split()
+   tokenized = [tokenize(c) for c in chunks]
+   return BM25Okapi(tokenized), tokenize
+
+# Keyword Search Function
+def keyword_search(query, chunks, bm25, tokenizer, top_k=3):
+    """
+    Performs BM25 keyword search over a list of text chunks.
+
+    Args:
+        query (str): The user's search query.
+        chunks (list): List of strings (the text chunks).
+        bm25 (object): To run the keyword search.
+        tokenizer (function): To tokenize the user query.
+        top_k (int): Number of results to return.
+
+    Returns:
+        list: The top_k most relevant chunks.
+    """
+    tokenized_query = tokenizer(query)
+    return bm25.get_top_n(tokenized_query, chunks, n=top_k)
 
 # All the RAG tools will use the same embedding version to convert text into embeddings
 embeddings = GoogleGenerativeAIEmbeddings(
@@ -112,6 +109,7 @@ embeddings = GoogleGenerativeAIEmbeddings(
 # Company Project Notes - Document Loading and Chunking
 full_text_pd1 = load_pdf("Project_Descriptions1.pdf")
 chunks_pd1 = get_chunks(full_text_pd1, 2000, 200)
+bm25_pd1, tokenize_pd1 = build_bm25_index(chunks_pd1)
 
 # Embeddings and Storage
 # Use Chroma.from_texts() with chunks and embedding model
@@ -138,6 +136,9 @@ Answer:"""
 
 prompt_pd1 = ChatPromptTemplate.from_template(template_pd1)
 
+# Defining chain beforehand
+chain_pd1 = prompt_pd1 | llm_pd1 | StrOutputParser()
+
 @tool
 def process_project_description(query: str) -> str:
   """Search and retrieve specific information about company projects,
@@ -147,13 +148,18 @@ def process_project_description(query: str) -> str:
   vector_texts = [doc.page_content for doc in vector_docs]
 
   # Running Keyword search
-  keyword_texts = keyword_search(query, chunks_pd1, top_k=3)
+  keyword_texts = keyword_search(query, chunks_pd1, bm25_pd1, tokenize_pd1)
+  
+  # Merging results from Keyword and Semantic search
+  seen = set()
+  merged = []
+  for t in (vector_texts + keyword_texts):
+    if t not in seen:
+      seen.add(t)
+      merged.append(t)
+  context_string = "\n\n---\n\n".join(merged[:8])
 
-  # Merging duplicate chunks
-  merged_texts = list(set(vector_texts + keyword_texts))
-  context_string = "\n\n---\n\n".join(merged_texts)
-  chain = prompt_pd1 | llm_pd1 | StrOutputParser()
-  return chain.invoke({"context": context_string, "question": query})
+  return chain_pd1.invoke({"context": context_string, "question": query})
 
 agent_llm_pd1 = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 
@@ -184,6 +190,8 @@ chunks_mn2 = get_chunks(full_text_mn2, 200, 50)
 # Embeddings and Storage
 meeting_notes_chunks = chunks_mn1 + chunks_mn2
 
+bm25_mn, tokenize_mn = build_bm25_index(meeting_notes_chunks)
+
 # Use Chroma.from_texts() with chunks and embedding model
 vectorstore_mn = Chroma.from_texts(
     texts=meeting_notes_chunks,
@@ -209,22 +217,29 @@ Answer:"""
 
 prompt_mn = ChatPromptTemplate.from_template(template_mn)
 
+chain_mn = prompt_mn | llm_mn | StrOutputParser()
+
 @tool
 def process_meeting_notes(query: str) -> str:
   """Process and Search the uploaded Meeting Notes for tasks mentioned in company meetings. Tasks can include information about action items for projects, types of employees and access levels required, and deadines.
     Use this tool when asked about tasks mentioned in meeting notes."""
   # Running semantic search
-  vector_docs = vectorstore_mn.similarity_search(query, k=100)
+  vector_docs = vectorstore_mn.similarity_search(query, k=5)
   vector_texts = [doc.page_content for doc in vector_docs]
 
   # Running Keyword search
-  keyword_texts = keyword_search(query, meeting_notes_chunks, top_k=3)
+  keyword_texts = keyword_search(query, meeting_notes_chunks, bm25_mn, tokenize_mn)
+  
+  # Merging results from Keyword and Semantic search
+  seen = set()
+  merged = []
+  for t in (vector_texts + keyword_texts):
+    if t not in seen:
+      seen.add(t)
+      merged.append(t)
+  context_string = "\n\n---\n\n".join(merged[:8])
 
-  # Merging duplicate chunks
-  merged_texts = list(set(vector_texts + keyword_texts))
-  context_string = "\n\n---\n\n".join(merged_texts)
-  chain = prompt_mn | llm_mn | StrOutputParser()
-  return chain.invoke({"context": context_string, "question": query})
+  return chain_mn.invoke({"context": context_string, "question": query})
 
 # Meeting Notes Agent with RAG Tool
 
@@ -277,6 +292,8 @@ position_text = "Position Summary:\n" + "\n".join([f"- {position}: {count} emplo
 employee_texts.append(team_text)
 employee_texts.append(position_text)
 
+bm25_ed, tokenize_ed = build_bm25_index(employee_texts)
+
 # Embeddings and Storage
 # Create vector store for employee data
 
@@ -307,6 +324,8 @@ Answer:"""
 
 prompt_ed = ChatPromptTemplate.from_template(template_ed)
 
+chain_ed = prompt_ed | llm_ed | StrOutputParser()
+
 @tool
 def process_employee_data(query: str) -> str:
   """Process and Search the uploaded Employee Data for information about employees, teams, positions, and clearance levels.
@@ -316,13 +335,18 @@ def process_employee_data(query: str) -> str:
   vector_texts = [doc.page_content for doc in vector_docs]
 
   # Running Keyword search
-  keyword_texts = keyword_search(query, employee_texts, top_k=3)
+  keyword_texts = keyword_search(query, employee_texts, bm25_ed, tokenize_ed)
 
   # Merging duplicate chunks
-  merged_texts = list(set(vector_texts + keyword_texts))
-  context_string = "\n\n---\n\n".join(merged_texts)
-  chain = prompt_ed | llm_ed | StrOutputParser()
-  return chain.invoke({"context": context_string, "question": query})
+  seen = set()
+  merged = []
+  for t in (vector_texts + keyword_texts):
+    if t not in seen:
+      seen.add(t)
+      merged.append(t)
+
+  context_string = "\n\n---\n\n".join(merged[:8])
+  return chain_ed.invoke({"context": context_string, "question": query})
 
 # Employee Data Agent with RAG Tool
 
