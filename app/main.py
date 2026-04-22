@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
 from app.agent import agent_main
+from fastapi.responses import RedirectResponse
 
 load_dotenv()
 
@@ -50,6 +51,10 @@ async def verify_files():
             print(f"CRITICAL ERROR: {file} is missing! Agent will fail.")
         else:
             print(f"SUCCESS: {file} detected.")
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/ui")
 
 @app.get("/health")
 async def health_check():
